@@ -2,6 +2,13 @@
 
 This template should help get you started developing with Vue 3 in Vite.
 
+## Data flow (Pinia + API)
+
+- Products are loaded via `fetch` (no more static arrays).
+- Set `VITE_PRODUCTS_API_URL` to point to your products endpoint.
+  - Default (if not set): `https://fakestoreapi.com/products`
+- Cart state is tracked in a Pinia store and shown in the navbar.
+
 ## Recommended IDE Setup
 
 [VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
