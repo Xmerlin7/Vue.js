@@ -1,43 +1,39 @@
 <script setup>
 import { computed } from "vue";
+import { useProductsStore } from "../stores/products";
+import { useCartStore } from "../stores/cart";
+
 const props = defineProps({
-  product: {
-    type: Object,
-    default: () => ({
-      id: 1,
-      name: "Cozy Sneakers",
-      description: "High-quality sneakers that go with everything you wear.",
-      image:
-        "https://img.daisyui.com/images/stock/photo-1552068751-34cb5cf055b3.webp",
-      badge: "NEW",
-      price: 120,
-      discount: 20,
-      tags: ["Fashion", "Casual", "Sport"],
-    }),
-  },
-  stock: {
-    type: Number,
-    default: 0,
+  productId: {
+    type: [Number, String],
+    required: true,
   },
 });
 
-const emit = defineEmits(["buy"]);
+const productsStore = useProductsStore();
+const cartStore = useCartStore();
+
+const product = computed(() => productsStore.getById(props.productId));
+const stock = computed(() => productsStore.stockFor(props.productId));
 
 const discountedPrice = computed(() => {
-  return props.product.price - props.product.discount;
+  const price = product.value?.price ?? 0;
+  const discount = product.value?.discount ?? 0;
+  return Math.max(price - discount, 0);
 });
 
-const isOutOfStock = computed(() => (props.stock ?? 0) <= 0);
+const isOutOfStock = computed(() => (stock.value ?? 0) <= 0);
 
 function onBuy() {
   if (isOutOfStock.value) return;
-  emit("buy");
+  const ok = productsStore.buy(props.productId);
+  if (ok) cartStore.add(props.productId, 1);
 }
 </script>
 
 <template>
   <section class="w-full">
-    <div class="card bg-base-100 shadow">
+    <div v-if="product" class="card bg-base-100 shadow">
       <div class="card-body">
         <div class="flex flex-col gap-6 md:flex-row md:items-start">
           <figure class="w-full md:w-1/2">
@@ -51,7 +47,9 @@ function onBuy() {
           <div class="w-full md:w-1/2">
             <div class="flex items-center gap-3">
               <h1 class="text-2xl font-bold">{{ product.name }}</h1>
-              <div class="badge badge-primary">{{ product.badge }}</div>
+              <div v-if="product.badge" class="badge badge-primary">
+                {{ product.badge }}
+              </div>
               <div
                 class="badge"
                 :class="isOutOfStock ? 'badge-error' : 'badge-success'"
@@ -64,13 +62,17 @@ function onBuy() {
 
             <div class="mt-4 flex items-center gap-3">
               <span class="text-3xl font-bold">${{ discountedPrice }}</span>
-              <span class="text-base-content/50 line-through"
+              <span
+                v-if="(product.discount ?? 0) > 0"
+                class="text-base-content/50 line-through"
                 >${{ product.price }}</span
               >
-              <span class="badge badge-ghost">- ${{ product.discount }}</span>
+              <span v-if="(product.discount ?? 0) > 0" class="badge badge-ghost"
+                >- ${{ product.discount }}</span
+              >
             </div>
 
-            <div class="mt-4 flex flex-wrap gap-2">
+            <div v-if="product.tags?.length" class="mt-4 flex flex-wrap gap-2">
               <span
                 v-for="tag in product.tags"
                 :key="tag"
@@ -92,6 +94,10 @@ function onBuy() {
           </div>
         </div>
       </div>
+    </div>
+
+    <div v-else class="alert alert-warning">
+      <span>Product is not available.</span>
     </div>
   </section>
 </template>

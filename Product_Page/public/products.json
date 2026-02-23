@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1,
+    "title": "Cozy Sneakers",
+    "description": "High-quality sneakers that go with everything you wear.",
+    "image": "https://picsum.photos/id/21/800/600",
+    "price": 120,
+    "category": "Fashion"
+  },
+  {
+    "id": 2,
+    "title": "Everyday Backpack",
+    "description": "Lightweight backpack with plenty of compartments.",
+    "image": "https://picsum.photos/id/1062/800/600",
+    "price": 85,
+    "category": "Utility"
+  },
+  {
+    "id": 3,
+    "title": "Minimal Watch",
+    "description": "A clean, minimal watch that matches any style.",
+    "image": "https://picsum.photos/id/175/800/600",
+    "price": 150,
+    "category": "Accessories"
+  },
+  {
+    "id": 4,
+    "title": "Wireless Headphones",
+    "description": "Comfortable over-ear sound with solid battery life.",
+    "image": "https://picsum.photos/id/180/800/600",
+    "price": 199,
+    "category": "Audio"
+  }
+]

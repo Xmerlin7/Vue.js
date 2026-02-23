@@ -1,13 +1,17 @@
 <script setup>
-import { computed, reactive } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { computed, onMounted } from "vue";
+import { useRoute } from "vue-router";
 
 import MainProduct from "../components/MainProduct.vue";
 import RelativeProducts from "../components/RelativeProducts.vue";
-import { products } from "../data/products";
+import { useProductsStore } from "../stores/products";
 
 const route = useRoute();
-const router = useRouter();
+const productsStore = useProductsStore();
+
+onMounted(() => {
+  productsStore.loadProducts();
+});
 
 // Requirement: computed on route.params.id
 const productId = computed(() => Number(route.params.id));
@@ -18,32 +22,15 @@ const resolvedId = computed(() => {
   return candidate;
 });
 
-const stockById = reactive(Object.fromEntries(products.map((p) => [p.id, 5])));
-
 const selectedProduct = computed(() => {
   if (resolvedId.value == null) return null;
-  return products.find((p) => p.id === resolvedId.value) ?? null;
+  return productsStore.getById(resolvedId.value);
 });
-
-const selectedStock = computed(() =>
-  resolvedId.value == null ? 0 : (stockById[resolvedId.value] ?? 0),
-);
 
 const relativeProducts = computed(() => {
   if (!selectedProduct.value) return [];
-  return products.filter((p) => p.id !== selectedProduct.value.id).slice(0, 3);
+  return productsStore.relativeById(selectedProduct.value.id, 3);
 });
-
-function handleBuy() {
-  if (resolvedId.value == null) return;
-  const current = stockById[resolvedId.value] ?? 0;
-  if (current <= 0) return;
-  stockById[resolvedId.value] = current - 1;
-}
-
-function handleViewDetails(nextId) {
-  router.push({ name: "product-details", params: { id: nextId } });
-}
 </script>
 
 <template>
@@ -56,11 +43,7 @@ function handleViewDetails(nextId) {
     </div>
 
     <div v-if="selectedProduct">
-      <MainProduct
-        :product="selectedProduct"
-        :stock="selectedStock"
-        @buy="handleBuy"
-      />
+      <MainProduct :product-id="selectedProduct.id" />
 
       <div class="mt-10">
         <h3 class="text-lg font-bold">Relative products</h3>
@@ -68,11 +51,16 @@ function handleViewDetails(nextId) {
           <RelativeProducts
             v-for="p in relativeProducts"
             :key="p.id"
-            :product="p"
-            @view="handleViewDetails"
+            :product-id="p.id"
           />
         </div>
       </div>
+    </div>
+
+    <div v-else-if="productsStore.loading" class="skeleton h-80 w-full"></div>
+
+    <div v-else-if="productsStore.error" class="alert alert-error">
+      <span>{{ productsStore.error }}</span>
     </div>
 
     <div v-else class="alert alert-error">
