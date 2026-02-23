@@ -1,47 +1,52 @@
 <script setup>
-import { computed, reactive, ref } from "vue";
-import { useRouter } from "vue-router";
+import { computed, onMounted, ref, watch } from "vue";
 
 import MainProduct from "../components/MainProduct.vue";
 import RelativeProducts from "../components/RelativeProducts.vue";
-import { products } from "../data/products";
 
-const router = useRouter();
+import { useProductsStore } from "../stores/products";
+const productsStore = useProductsStore();
 
-const selectedId = ref(products[0]?.id ?? 1);
+const selectedId = ref(null);
 
-const stockById = reactive(Object.fromEntries(products.map((p) => [p.id, 5])));
-
-const selectedProduct = computed(() => {
-  return products.find((p) => p.id === selectedId.value) ?? products[0];
+onMounted(() => {
+  productsStore.loadProducts();
 });
 
-const selectedStock = computed(() => stockById[selectedId.value] ?? 0);
-
-const relativeProducts = computed(() =>
-  products.filter((p) => p.id !== selectedId.value).slice(0, 3),
+watch(
+  () => productsStore.products,
+  (products) => {
+    if (selectedId.value == null && products.length > 0) {
+      selectedId.value = products[0].id;
+    }
+  },
+  { immediate: true },
 );
 
-function handleBuy() {
-  const current = stockById[selectedId.value] ?? 0;
-  if (current <= 0) return;
-  stockById[selectedId.value] = current - 1;
-}
+const selectedProduct = computed(() =>
+  selectedId.value == null ? null : productsStore.getById(selectedId.value),
+);
 
-function handleViewDetails(productId) {
-  selectedId.value = productId;
-  router.push({ name: "product-details", params: { id: productId } });
-}
+const relativeProducts = computed(() =>
+  selectedId.value == null
+    ? []
+    : productsStore.relativeById(selectedId.value, 3),
+);
 </script>
 
 <template>
   <section class="mx-auto w-full max-w-6xl px-4 py-8">
-    <MainProduct
-      v-if="selectedProduct"
-      :product="selectedProduct"
-      :stock="selectedStock"
-      @buy="handleBuy"
-    />
+    <div v-if="productsStore.loading" class="skeleton h-80 w-full"></div>
+
+    <div v-else-if="productsStore.error" class="alert alert-error">
+      <span>{{ productsStore.error }}</span>
+    </div>
+
+    <MainProduct v-else-if="selectedProduct" :product-id="selectedId" />
+
+    <div v-else class="alert alert-warning">
+      <span>No products found.</span>
+    </div>
 
     <div class="mt-10">
       <h2 class="text-xl font-bold">Relative products</h2>
@@ -49,8 +54,7 @@ function handleViewDetails(productId) {
         <RelativeProducts
           v-for="p in relativeProducts"
           :key="p.id"
-          :product="p"
-          @view="handleViewDetails"
+          :product-id="p.id"
         />
       </div>
     </div>
