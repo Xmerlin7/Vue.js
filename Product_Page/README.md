@@ -6,7 +6,7 @@ This template should help get you started developing with Vue 3 in Vite.
 
 - Products are loaded via `fetch` (no more static arrays).
 - Set `VITE_PRODUCTS_API_URL` to point to your products endpoint.
-  - Default (if not set): `https://fakestoreapi.com/products`
+  - Default (if not set): `/products.json` (served by Vite from `public/`)
 - Cart state is tracked in a Pinia store and shown in the navbar.
 
 ## Recommended IDE Setup
